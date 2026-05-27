@@ -437,21 +437,54 @@ public class DataBaseManager {
         return false;
     }
 
-    public boolean hasUser(String login, String password){
-        System.out.println("has user start");
+//    public boolean hasUser(String login, String password){
+//        System.out.println("has user start");
+//        String sql = """
+//                SELECT * FROM users
+//                WHERE name=? and password=?
+//                """;
+//        try (PreparedStatement ps = dataSource.getConnection().prepareStatement(sql)) {
+//            setParameters(ps, login, password);
+//
+//            ResultSet set = ps.executeQuery();
+//            return set.next();
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        //return false;
+//    }
+
+    public String getUserPasswordHash(String login){
         String sql = """
-                SELECT * FROM users
-                WHERE name=? and password=?
+                SELECT password FROM users
+                WHERE name=?
                 """;
         try (PreparedStatement ps = dataSource.getConnection().prepareStatement(sql)) {
-            setParameters(ps, login, password);
+            setParameters(ps, login);
+
+            ResultSet set = ps.executeQuery();
+            return set.getString(0);// .next();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean hasUser(String login){
+        //System.out.println("has user start");
+        String sql = """
+                SELECT * FROM users
+                WHERE name=?
+                """;
+        try (PreparedStatement ps = dataSource.getConnection().prepareStatement(sql)) {
+            setParameters(ps, login);
 
             ResultSet set = ps.executeQuery();
             return set.next();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
-        //return false;
     }
+
+
 }

@@ -1,6 +1,7 @@
 package lab7.server;
 
 import com.google.gson.Gson;
+import lab7.client.BCrypt;
 import lab7.server.commands.base.CommandManager;
 import lab7.utils.ClientRequest;
 import lab7.utils.DatagramChunk;
@@ -39,8 +40,7 @@ public class ServerConnectionTask implements Runnable{
 
             logger.info("Получено от {}:{} -> {}", clientAddress, clientPort, receivedData);
 
-            if (!DBManager.hasUser(receivedData.getLogin(), receivedData.getPassword()) &&
-            !receivedData.getCommand().startsWith("login") && !receivedData.getCommand().startsWith("register"))
+            if (checkUser(receivedData.getLogin(), receivedData.getPassword(), receivedData.getCommand()))
             {
                 sendBack("Для выполнения команд нужно авторизоваться", clientAddress, clientPort);
                 return;
@@ -75,5 +75,11 @@ public class ServerConnectionTask implements Runnable{
             logger.info("Отправлено: {}", chunk);
             serverSocket.send(sendPacket);
         }
+    }
+
+    private boolean checkUser(String login, String password, String command) {
+        DataBaseManager db = DataBaseManager.getInstance();
+        return command.equals("register") && !db.hasUser(login) ||
+                command.equals("login") && BCrypt.checkpw(password, db.getUserPasswordHash(login));
     }
 }

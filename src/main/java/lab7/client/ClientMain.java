@@ -23,6 +23,7 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -103,6 +104,21 @@ public class ClientMain implements Runnable{
 
     @Override
     public void run() {
+        SecureRandom rnd = new SecureRandom();
+        sc = new Scanner(System.in);
+        String hashed = BCrypt.hashpw("123456", BCrypt.gensalt());
+        System.out.println(hashed);
+        System.out.println("=====================================");
+        while (sc.hasNextLine()){
+            String s = sc.nextLine();
+            String h = BCrypt.hashpw(s, BCrypt.gensalt());
+            System.out.println(h);
+            System.out.println(BCrypt.checkpw(h, hashed));
+            System.out.println(BCrypt.checkpw(s, hashed));
+            System.out.println("=====================================");
+        }
+
+
         try {
             socket = new DatagramSocket();
             socket.setSoTimeout(TIMEOUT_MS);
@@ -327,11 +343,16 @@ public class ClientMain implements Runnable{
                 //logger.info(String.format("Добавлен аргумент %s к команде %s", gson.toJson(marine), parsedCommand[0]));
                 break;
             case "login":
+                login = parsedCommand[1];
+                password = parsedCommand[2];
+                ret.add(login);
+                ret.add(password);
+                break;
             case "register":
                 login = parsedCommand[1];
                 password = parsedCommand[2];
-                ret.add(parsedCommand[1]);
-                ret.add(BCrypt.hashpw(password, BCrypt));
+                ret.add(login);
+                ret.add(BCrypt.hashpw(password, BCrypt.gensalt()));
                 break;
         }
         return ret;
