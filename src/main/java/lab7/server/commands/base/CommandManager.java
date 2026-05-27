@@ -2,6 +2,7 @@ package lab7.server.commands.base;
 
 import lab7.server.CollectionController;
 import lab7.collectionItems.SpaceMarine;
+import lab7.server.DataBaseManager;
 import lab7.server.commands.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +38,14 @@ public class CommandManager {
         commands.put("u?", new Command() {
             @Override
             public String execute(String name, String... args) {
-                StringBuilder sb = new StringBuilder();
-                collection.getCollectionElements().stream().map(SpaceMarine::getID).forEach(x -> sb.append(x).append(" "));
-                return sb.toString();
+                try {
+                    int id = Integer.parseInt(args[0]);
+                    if (collection.getCollectionElements().stream().map(SpaceMarine::getID).noneMatch(x -> x == id))
+                        return "-1";
+                    if (!DataBaseManager.getInstance().getOwnerNameById(id).equals(name))
+                        return "-2";
+                    return  "0";
+                } catch (Exception ex) { return "-2"; }
             }
 
             @Override

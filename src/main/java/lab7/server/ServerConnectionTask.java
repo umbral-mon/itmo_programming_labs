@@ -40,16 +40,15 @@ public class ServerConnectionTask implements Runnable{
 
             logger.info("Получено от {}:{} -> {}", clientAddress, clientPort, receivedData);
 
-            if (checkUser(receivedData.getLogin(), receivedData.getPassword(), receivedData.getCommand()))
+            if (!checkUser(receivedData.getLogin(), receivedData.getPassword(), receivedData.getCommand()))
             {
                 sendBack("Для выполнения команд нужно авторизоваться", clientAddress, clientPort);
                 return;
             }
 
-            if (receivedData.getCommand().equals("u?")){
-                byte[] sendBuffer = manager.executeCommand("",  "u?").getBytes();
-                DatagramPacket sendPacket = new DatagramPacket(sendBuffer, sendBuffer.length, clientAddress, clientPort);
-                serverSocket.send(sendPacket);
+            if (receivedData.getCommand().startsWith("u?")){
+                String data = manager.executeCommand(receivedData.getLogin(), receivedData.getCommand());
+                sendBack(data, clientAddress, clientPort);
                 return;
             }
 
@@ -78,8 +77,13 @@ public class ServerConnectionTask implements Runnable{
     }
 
     private boolean checkUser(String login, String password, String command) {
+        String[] parse = command.split(" ");
         DataBaseManager db = DataBaseManager.getInstance();
-        return command.equals("register") && !db.hasUser(login) ||
-                command.equals("login") && BCrypt.checkpw(password, db.getUserPasswordHash(login));
+        boolean isRegister = parse[0].equals("register");
+        boolean isLogin = parse[0].equals("login");
+        boolean unauthorizedCheck = isLogin || isRegister;
+        boolean authorizedCheck = db.hasUser(login) && BCrypt.checkpw(password, db.getUserPasswordHash(login));
+        //System.out.println("Check user result: " + (unauthorizedCheck || authorizedCheck) + " a:" + authorizedCheck + " ua:" + unauthorizedCheck);
+        return unauthorizedCheck || authorizedCheck;
     }
 }

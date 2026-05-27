@@ -35,10 +35,6 @@ public class DataBaseManager {
         initialize();
     }
 
-    // ============================================================
-    //  Инициализация таблиц
-    // ============================================================
-
     private static DataBaseManager instance = null;
     public static DataBaseManager getInstance(){
         if (instance == null)
@@ -81,10 +77,6 @@ public class DataBaseManager {
         update(createSpaceMarinesTable);
         logger.info("Таблицы БД успешно инициализированы.");
     }
-
-    // ============================================================
-    //  Общие утилиты (select / update / setParameters)
-    // ============================================================
 
     public List<Map<String, Object>> select(String sql, Object... params) {
         List<Map<String, Object>> result = new ArrayList<>();
@@ -132,10 +124,6 @@ public class DataBaseManager {
             }
         }
     }
-
-    // ============================================================
-    //  CRUD-операции для SpaceMarine
-    // ============================================================
 
     /**
      * Загрузить все записи из таблицы space_marines, упорядоченные по ordernum.
@@ -407,10 +395,6 @@ public class DataBaseManager {
         update(sql);
     }
 
-    // ============================================================
-    //  Закрытие пула
-    // ============================================================
-
     public void close() {
         if (dataSource != null && !dataSource.isClosed()) {
             dataSource.close();
@@ -460,13 +444,37 @@ public class DataBaseManager {
                 SELECT password FROM users
                 WHERE name=?
                 """;
-        try (PreparedStatement ps = dataSource.getConnection().prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            //System.out.println(login);
             setParameters(ps, login);
 
             ResultSet set = ps.executeQuery();
-            return set.getString(0);// .next();
+            if (set.next()) return set.getString(1);
+            else            return null;
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            return null;
+            //throw new RuntimeException(e);
+        }
+    }
+
+    public String getOwnerNameById(int id){
+        String sql = """
+                SELECT owner FROM space_marines
+                WHERE id=?
+                """;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            setParameters(ps, id);
+
+            ResultSet set = ps.executeQuery();
+            if (set.next()) return set.getString(1);
+            else            return null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+            //throw new RuntimeException(e);
         }
     }
 
@@ -476,13 +484,15 @@ public class DataBaseManager {
                 SELECT * FROM users
                 WHERE name=?
                 """;
-        try (PreparedStatement ps = dataSource.getConnection().prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             setParameters(ps, login);
 
             ResultSet set = ps.executeQuery();
             return set.next();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            return false;
+            //throw new RuntimeException(e);
         }
     }
 

@@ -104,19 +104,19 @@ public class ClientMain implements Runnable{
 
     @Override
     public void run() {
-        SecureRandom rnd = new SecureRandom();
-        sc = new Scanner(System.in);
-        String hashed = BCrypt.hashpw("123456", BCrypt.gensalt());
-        System.out.println(hashed);
-        System.out.println("=====================================");
-        while (sc.hasNextLine()){
-            String s = sc.nextLine();
-            String h = BCrypt.hashpw(s, BCrypt.gensalt());
-            System.out.println(h);
-            System.out.println(BCrypt.checkpw(h, hashed));
-            System.out.println(BCrypt.checkpw(s, hashed));
-            System.out.println("=====================================");
-        }
+//        SecureRandom rnd = new SecureRandom();
+//        sc = new Scanner(System.in);
+//        String hashed = BCrypt.hashpw("123456", BCrypt.gensalt());
+//        System.out.println(hashed);
+//        System.out.println("=====================================");
+//        while (sc.hasNextLine()){
+//            String s = sc.nextLine();
+//            String h = BCrypt.hashpw(s, BCrypt.gensalt());
+//            System.out.println(h);
+//            System.out.println(BCrypt.checkpw(h, hashed));
+//            System.out.println(BCrypt.checkpw(s, hashed));
+//            System.out.println("=====================================");
+//        }
 
 
         try {
@@ -134,10 +134,11 @@ public class ClientMain implements Runnable{
                 //IOHelper.consoleOut.print(">>");
                 //String message = handleCommand(sc.nextLine(), IOHelper.consoleIn);
                 String message = handleCommand(IOHelper.readLine());
-                if (message == null) continue;
-                ClientRequest request = new ClientRequest(login, BCrypt.hashpw(password, BCrypt.gensalt()), message);
-                sendToServer(request);
-                IOHelper.consoleOut.print(">>");
+                if (message == null) { IOHelper.consoleOut.print(">>"); continue; }
+                ClientRequest request = new ClientRequest(login, password, message);
+                String response = sendToServer(request);
+                handleResponse(response);
+
             }
 
         } catch (IOException e) {
@@ -145,7 +146,7 @@ public class ClientMain implements Runnable{
         }
     }
 
-    private void sendToServer(ClientRequest request) throws IOException {
+    private String sendToServer(ClientRequest request) throws IOException {
         String message = gson.toJson(request);
         System.out.println(message);
         DatagramChunk[] chunks = DatagramChunk.split(message);
@@ -153,7 +154,7 @@ public class ClientMain implements Runnable{
         for (DatagramChunk chunk : chunks) {
             String json = gson.toJson(chunk);
             //ByteBuffer sendBuffer = ByteBuffer.wrap(json.getBytes());
-            System.out.println("Отправка данных: " + chunk);
+            //System.out.println("Отправка данных: " + chunk);
             //channel.send(sendBuffer, serverAddress);
             DatagramPacket sendPacket = new DatagramPacket(json.getBytes(), json.getBytes().length, serverAddress);
             socket.send(sendPacket);
@@ -175,7 +176,7 @@ public class ClientMain implements Runnable{
                         for (DatagramChunk chunk : chunks) {
                             String json = gson.toJson(chunk);
                             ByteBuffer sendBuffer = ByteBuffer.wrap(json.getBytes());
-                            System.out.println("Отправка данных: " + chunk);
+                            //System.out.println("Отправка данных: " + chunk);
                             channel.send(sendBuffer, serverAddress);
                         }
                     }
@@ -195,7 +196,8 @@ public class ClientMain implements Runnable{
         for (DatagramChunk chunk : responseChunks)
             response.append(new String(chunk.getData()));
 
-        IOHelper.consoleOut.println(response);
+        //IOHelper.consoleOut.println(response);
+        return response.toString();
 
 
         //return null;
@@ -212,78 +214,36 @@ public class ClientMain implements Runnable{
         responseChunks.add(chunk);
 
         return !response.isEmpty();
+    }
 
-//        Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+    private int canUseUpdateCommand(int id) throws IOException{
+        String response = sendToServer(new ClientRequest(login, password, "u? " + id));
+        return Integer.parseInt(response.trim());
+    }
+
+//    private boolean handleResponse(Iterator<SelectionKey> iterator) throws IOException{
+//        boolean responseReceived = false;
 //        while (iterator.hasNext()) {
-//            System.out.println(222222);
 //            SelectionKey key = iterator.next();
 //            if (key.isReadable()) {
-//                System.out.println(33333333);
 //                ByteBuffer receiveBuffer = ByteBuffer.allocate(65000);
 //                InetSocketAddress from = (InetSocketAddress) channel.receive(receiveBuffer);
 //
 //                if (from != null) {
-//                    System.out.println(4444444);
 //                    receiveBuffer.flip();
 //                    String response = new String(receiveBuffer.array(), 0, receiveBuffer.limit(), StandardCharsets.UTF_8);
-//                    DatagramChunk receivedChunk = gson.fromJson(response, DatagramChunk.class);
-//                    responseChunks.add(receivedChunk);
-//                    //System.out.println(response);
-//                    iterator.remove();
-//                    return responseChunks.size() == receivedChunk.getPacketCount();
 //                    //logger.info("Получен ответ от сервера: " + response);
+//                    System.out.println(response);
+//                    responseReceived = true;
 //                }
 //            }
 //            iterator.remove();
 //        }
-//        return false;
-    }
+//        return responseReceived;
+//    }
 
-    private boolean canUseUpdateCommand(int id) throws IOException{
-        channel.send(
-                ByteBuffer.wrap("u?".getBytes()),
-                new InetSocketAddress(SERVER_HOST, SERVER_PORT));
-        int readyChannels = selector.select(TIMEOUT_MS);
-        Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-        while (iterator.hasNext()) {
-            SelectionKey key = iterator.next();
-            if (key.isReadable()) {
-                ByteBuffer receiveBuffer = ByteBuffer.allocate(65000);
-                InetSocketAddress from = (InetSocketAddress) channel.receive(receiveBuffer);
-
-                if (from != null) {
-                    receiveBuffer.flip();
-                    String response = new String(receiveBuffer.array(), 0, receiveBuffer.limit(), StandardCharsets.UTF_8);
-                    //System.out.println(response);
-                    iterator.remove();
-                    return Arrays.stream(response.split(" ")).anyMatch(x -> x.equals(String.valueOf(id)));
-                    //logger.info("Получен ответ от сервера: " + response);
-                }
-            }
-            iterator.remove();
-        }
-        return false;
-    }
-
-    private boolean handleResponse(Iterator<SelectionKey> iterator) throws IOException{
-        boolean responseReceived = false;
-        while (iterator.hasNext()) {
-            SelectionKey key = iterator.next();
-            if (key.isReadable()) {
-                ByteBuffer receiveBuffer = ByteBuffer.allocate(65000);
-                InetSocketAddress from = (InetSocketAddress) channel.receive(receiveBuffer);
-
-                if (from != null) {
-                    receiveBuffer.flip();
-                    String response = new String(receiveBuffer.array(), 0, receiveBuffer.limit(), StandardCharsets.UTF_8);
-                    //logger.info("Получен ответ от сервера: " + response);
-                    System.out.println(response);
-                    responseReceived = true;
-                }
-            }
-            iterator.remove();
-        }
-        return responseReceived;
+    private void handleResponse(String response){
+        IOHelper.consoleOut.println(response);
     }
 
     private String handleCommand(String command) throws IOException, NumberFormatException {
@@ -294,8 +254,12 @@ public class ClientMain implements Runnable{
             return null;
         }
         if (splittedCommand[0].equals("update")){
-            if (!canUseUpdateCommand(Integer.parseInt(splittedCommand[1]))) {
+            int result = canUseUpdateCommand(Integer.parseInt(splittedCommand[1]));
+            if (result == -1) {
                 System.out.println("Не существует id " + splittedCommand[1]);
+                return null;
+            } else if (result == -2) {
+                System.out.printf("Ошибка: пользователь '%s' не является хозяином SpaceMarine id=%s", login, splittedCommand[1]);
                 return null;
             }
         }

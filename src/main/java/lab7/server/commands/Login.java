@@ -11,7 +11,9 @@ public class Login implements Command {
         if (args.length != 2)
             return "Команда должна содержать 2 параметра - логин и пароль";
         String userHash = DataBaseManager.getInstance().getUserPasswordHash(args[0]);
-        return BCrypt.checkpw(userHash, args[1]) ?
+        if (userHash == null)
+            return "Неверный логин или пароль";
+        return BCrypt.checkpw(args[1], userHash) ?
                 "Добро пожаловать!" :
                 "Нет такого пользователя";
     }

@@ -100,7 +100,7 @@ public class ServerMain implements Runnable {
                             for (DatagramChunk c : receivedChunks.get(chunk.getTransactionId()))
                                 builder.append(new String(c.getData()));
                             ClientRequest request = gson.fromJson(builder.toString().trim(), ClientRequest.class);
-                            System.out.println("ПИДАРАСЫ");
+                            //System.out.println("ПИДАРАСЫ");
                             processExecutor.submit(new ServerConnectionTask(serverSocket, receivePacket, manager, request, DBManager));
                             receivedChunks.get(chunk.getTransactionId()).clear();
                         }

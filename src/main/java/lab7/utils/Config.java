@@ -96,9 +96,9 @@ public class Config {
         String serverAddress = "localHost";
         int port = 9988;
         String collectionFileName = "collection.json",
-        DBURL = "jdbc:postgresql://pg/studs",
-        DBUser = "s335145",
-        DBPassword = "21980549";
+        DBURL = "url",
+        DBUser = "user",
+        DBPassword = "password";
         HashSet<String> serverLockedCommands = new HashSet<>(),
                         clientLockedCommands = new HashSet<>();
         int dataByteSize = 2048;
