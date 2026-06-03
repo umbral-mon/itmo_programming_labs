@@ -18,6 +18,7 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
@@ -55,17 +56,22 @@ public class ClientMain implements Runnable{
                     openedFiles.add(args[0]);
                     //IOHelper.defaultIn = reader;
                     //String command = IOHelper.readFileLine(reader);
-                    String command = IOHelper.readLine();
+                    String command = "";
+                    try {
+                    command = IOHelper.readLine();
+                    } catch (InterruptedException ex) {}
                     while (!command.isEmpty()) {
                         String message = handleCommand(command);
                         if (message == null) continue;
                         ClientRequest request = new ClientRequest(login, password, message);
                         sendToServer(request);
                         //command = IOHelper.readFileLine(reader);
-                        command = IOHelper.readLine();
+                        try {
+                            command = IOHelper.readLine();
+                        } catch (InterruptedException ex) {}
                     }
                     IOHelper.consoleOut.println("Скрипт завершен");
-                } catch (IOException e) {
+                } catch (IOException | InterruptedException e) {
                 } catch (FileReadingException e) {
                     IOHelper.errOut.println("Ошибка при чтении файла. Изменения не будут применены");
                 } finally {
@@ -133,22 +139,28 @@ public class ClientMain implements Runnable{
             while (IOHelper.hasNext()) {
                 //IOHelper.consoleOut.print(">>");
                 //String message = handleCommand(sc.nextLine(), IOHelper.consoleIn);
-                String message = handleCommand(IOHelper.readLine());
-                if (message == null) { IOHelper.consoleOut.print(">>"); continue; }
-                ClientRequest request = new ClientRequest(login, password, message);
-                String response = sendToServer(request);
-                handleResponse(response);
-
+                try {
+                    String message = handleCommand(IOHelper.readLine());
+                    if (message == null) { IOHelper.consoleOut.print(">>"); continue; }
+                    ClientRequest request = new ClientRequest(login, password, message);
+                    String response = sendToServer(request);
+                    handleResponse(response);
+                    IOHelper.consoleOut.print(">>");
+                } catch (InterruptedException ex) {
+                    System.out.println();
+                    IOHelper.consoleOut.println(ex.getMessage());
+                }
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Произошли плохие манипуляции. Программа вмерла");
+            System.exit(0);
         }
     }
 
     private String sendToServer(ClientRequest request) throws IOException {
         String message = gson.toJson(request);
-        System.out.println(message);
+        //System.out.println(message);
         DatagramChunk[] chunks = DatagramChunk.split(message);
         InetSocketAddress serverAddress = new InetSocketAddress(SERVER_HOST, SERVER_PORT);
         for (DatagramChunk chunk : chunks) {
@@ -246,7 +258,7 @@ public class ClientMain implements Runnable{
         IOHelper.consoleOut.println(response);
     }
 
-    private String handleCommand(String command) throws IOException, NumberFormatException {
+    private String handleCommand(String command) throws IOException, NumberFormatException, InterruptedException {
         //logger.info("Обработка команды: " + command);
         String[] splittedCommand = command.split(" ");
         if (clientCommands.containsKey(splittedCommand[0])){
@@ -265,6 +277,8 @@ public class ClientMain implements Runnable{
         }
         try {
             Queue<String> args = getCommandArgs(splittedCommand);
+            if (args == null)
+                return null;
             StringBuilder sb = new StringBuilder(splittedCommand[0]);
             while(!args.isEmpty())
                 sb.append(" ").append(args.poll());
@@ -275,50 +289,54 @@ public class ClientMain implements Runnable{
         return null;
     }
 
-    private LinkedList<String> getCommandArgs(String[] parsedCommand) throws UnsupportedEncodingException {
+    private LinkedList<String> getCommandArgs(String[] parsedCommand) throws InterruptedException {
         LinkedList<String> ret = new LinkedList<>();
-        switch (parsedCommand[0]){
-            case "count_less_than_chapter":
-                Chapter chapter = IOHelper.readChapter();
-                ret.add(gson.toJson(chapter));
-                //logger.info(String.format("Добавлен аргумент %s к команде %s", gson.toJson(chapter), parsedCommand[0]));
-                break;
-            case "filter_starts_with_name":
-            case "execute_script":
-                ret.add(parsedCommand[1]);
-                //logger.info(String.format("Добавлен аргумент %s к команде %s", parsedCommand[1], parsedCommand[0]));
-                break;
-            case "remove_by_id":
-                Integer.parseInt(parsedCommand[1]);
-                ret.add(parsedCommand[1]);
-                //logger.info(String.format("Добавлен аргумент %s к команде %s", parsedCommand[1], parsedCommand[0]));
-                break;
-            case "update":
-            case "insert_at":
-                Integer.parseInt(parsedCommand[1]);
-                ret.add(parsedCommand[1]);
-                //logger.info(String.format("Добавлен аргумент %s к команде %s", parsedCommand[1], parsedCommand[0]));
-            case "add":
-            case "remove_greater":
-                SpaceMarine marine = IOHelper.readMarine();
-                marine.setOwner(login);
-                System.out.println(gson.toJson(marine));
-                ret.add(gson.toJson(marine));
-                //logger.info(String.format("Добавлен аргумент %s к команде %s", gson.toJson(marine), parsedCommand[0]));
-                break;
-            case "login":
-                login = parsedCommand[1];
-                password = parsedCommand[2];
-                ret.add(login);
-                ret.add(password);
-                break;
-            case "register":
-                login = parsedCommand[1];
-                password = parsedCommand[2];
-                ret.add(login);
-                ret.add(BCrypt.hashpw(password, BCrypt.gensalt()));
-                break;
-        }
+        //try {
+            switch (parsedCommand[0]) {
+                case "count_less_than_chapter":
+                    Chapter chapter = IOHelper.readChapter();
+                    ret.add(gson.toJson(chapter));
+                    //logger.info(String.format("Добавлен аргумент %s к команде %s", gson.toJson(chapter), parsedCommand[0]));
+                    break;
+                case "filter_starts_with_name":
+                case "execute_script":
+                    ret.add(parsedCommand[1]);
+                    //logger.info(String.format("Добавлен аргумент %s к команде %s", parsedCommand[1], parsedCommand[0]));
+                    break;
+                case "remove_by_id":
+                    Integer.parseInt(parsedCommand[1]);
+                    ret.add(parsedCommand[1]);
+                    //logger.info(String.format("Добавлен аргумент %s к команде %s", parsedCommand[1], parsedCommand[0]));
+                    break;
+                case "update":
+                case "insert_at":
+                    Integer.parseInt(parsedCommand[1]);
+                    ret.add(parsedCommand[1]);
+                    //logger.info(String.format("Добавлен аргумент %s к команде %s", parsedCommand[1], parsedCommand[0]));
+                case "add":
+                case "remove_greater":
+                    SpaceMarine marine = IOHelper.readMarine();
+                    marine.setOwner(login);
+                    System.out.println(gson.toJson(marine));
+                    ret.add(gson.toJson(marine));
+                    //logger.info(String.format("Добавлен аргумент %s к команде %s", gson.toJson(marine), parsedCommand[0]));
+                    break;
+                case "login":
+                    login = parsedCommand[1];
+                    password = parsedCommand[2];
+                    ret.add(login);
+                    ret.add(password);
+                    break;
+                case "register":
+                    login = parsedCommand[1];
+                    password = parsedCommand[2];
+                    ret.add(login);
+                    ret.add(BCrypt.hashpw(password, BCrypt.gensalt()));
+                    break;
+            }
+//        } catch (InterruptedException ex){
+//            return null;
+//        }
         return ret;
     }
 }

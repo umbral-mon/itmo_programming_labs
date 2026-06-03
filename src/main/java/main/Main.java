@@ -7,6 +7,8 @@ import lab5.Lab5Main;
 import lab6.Lab6Main;
 import lab7.Lab7Main;
 
+import java.util.*;
+
 public class Main {
 
     public static void main(String[] args) {

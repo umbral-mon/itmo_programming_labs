@@ -15,13 +15,12 @@ public class SpaceMarine implements Comparable<SpaceMarine> {
     private Weapon weaponType;
     private MeleeWeapon meleeWeapon;
     private Chapter chapter;
-    private String owner; // Имя пользователя-владельца объекта
+    private String owner;
 
     public void setOwner(String s){
         owner = s;
     }
 
-    // Конструктор для создания нового объекта (ID генерируется снаружи или сервисом)
     public SpaceMarine(Integer id, String name, Coordinates coordinates, LocalDate creationDate,
                        Double health, AstartesCategory category, Weapon weaponType,
                        MeleeWeapon meleeWeapon, Chapter chapter, String owner) {
@@ -55,9 +54,6 @@ public class SpaceMarine implements Comparable<SpaceMarine> {
                 health, category, weaponType, meleeWeapon, chapter, owner);
     }
 
-    /**
-     * Конструктор копирования. Копирует все поля, включая owner.
-     */
     public SpaceMarine(SpaceMarine other) {
         this(other.id, other.name, other.coordinates, other.creationDate, other.health,
                 other.category, other.weaponType, other.meleeWeapon, other.chapter, other.owner);
@@ -65,8 +61,6 @@ public class SpaceMarine implements Comparable<SpaceMarine> {
 
     /**
      * Обновляет изменяемые поля объекта из другого SpaceMarine.
-     * Поле owner НЕ обновляется — имущественные права нельзя передать через update.
-     * Поле id и creationDate также не изменяются.
      */
     public void update(SpaceMarine other) {
         this.health = other.health;
@@ -77,7 +71,6 @@ public class SpaceMarine implements Comparable<SpaceMarine> {
         this.name = other.name;
         this.coordinates = other.coordinates;
         this.creationDate = other.creationDate;
-        // owner НЕ обновляется — хозяин не меняется при update
     }
 
     @Override

@@ -42,11 +42,15 @@ public class IOHelper {
      * @param reader InputStreamReader to read from
      * @return String until \n on EOF
      */
-    private static String getLine(InputStream reader){
+    private static String getLine(InputStream reader) throws InterruptedException{
         try {
             StringBuilder sb = new StringBuilder();
             while (true) {
                 int c = reader.read();
+                if (c == -1) {
+                    //reader.read();
+                    throw new InterruptedException("ввод прерван");
+                }
                 if (c == -1 || c == '\n')
                     break;
                 sb.append((char)c);
@@ -59,7 +63,7 @@ public class IOHelper {
         return null;
     }
 
-    public static String readLine(){
+    public static String readLine() throws InterruptedException{
         return getLine(input);
     }
 
@@ -71,7 +75,7 @@ public class IOHelper {
      * reads SpaceMarine from stream
      * @return SpaceMarine object
      */
-    public static SpaceMarine readMarine() {
+    public static SpaceMarine readMarine() throws InterruptedException {
         boolean needGreet = input == consoleIn;
         String buff;
 
@@ -154,7 +158,7 @@ public class IOHelper {
      * reads Coordinates from stream
      * @return Coordinates object
      */
-    public static Coordinates readCoordinates(){
+    public static Coordinates readCoordinates() throws InterruptedException{
         boolean needGreet = input == consoleIn;
         String buff;
         Long x;
@@ -191,7 +195,7 @@ public class IOHelper {
      * reads Chapter from stream
      * @return Chapter object
      */
-    public static Chapter readChapter(){
+    public static Chapter readChapter() throws InterruptedException{
         boolean needGreet = input == consoleIn;
         String name, parentLegion;
         Integer marinesCount;

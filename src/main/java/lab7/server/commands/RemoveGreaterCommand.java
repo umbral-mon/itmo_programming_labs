@@ -2,6 +2,7 @@ package lab7.server.commands;
 
 import lab7.server.CollectionController;
 import lab7.collectionItems.SpaceMarine;
+import lab7.server.MyGsonFactory;
 import lab7.server.commands.base.CollectionCommand;
 import lab7.utils.IOHelper;
 
@@ -13,7 +14,8 @@ public class RemoveGreaterCommand extends CollectionCommand {
 
     @Override
     public String execute(String userName, String... args) {
-        SpaceMarine origin = IOHelper.readMarine();
+        //SpaceMarine origin = IOHelper.readMarine();
+        SpaceMarine origin = new SpaceMarine(MyGsonFactory.get().fromJson(args[1], SpaceMarine.class));
         controller.removeGreater(origin, userName);
         //IOHelper.printlnIfUsingConsole("Элементы удалены");
         return "Элементы удалены";

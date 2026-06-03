@@ -2,6 +2,7 @@ package lab7.server.commands;
 
 import lab7.server.CollectionController;
 import lab7.collectionItems.SpaceMarine;
+import lab7.server.MyGsonFactory;
 import lab7.server.commands.base.CollectionCommand;
 import lab7.utils.IOHelper;
 
@@ -17,7 +18,8 @@ public class InsertAtIndexCommand extends CollectionCommand {
         try {
             int id = Integer.parseInt(args[0]);
             if (id < 0 || id > controller.getCollectionSize()) return "";
-            SpaceMarine marine = IOHelper.readMarine();
+            //SpaceMarine marine = IOHelper.readMarine();
+            SpaceMarine marine = new SpaceMarine(MyGsonFactory.get().fromJson(args[1], SpaceMarine.class));
             controller.insertAt(id, marine);
 //            IOHelper.printlnIfUsingConsole(String.format("Элемент %s добавлен на позицию %d",
 //                    marine,

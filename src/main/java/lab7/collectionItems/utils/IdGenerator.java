@@ -28,11 +28,10 @@ public class IdGenerator {
         return id;
     }
 
-    // Используется при загрузке из файла, чтобы восстановить состояние
     public void registerExistingId(Integer id) {
         if (id == null) return;
         if (usedIds.contains(id)) {
-            throw new IllegalStateException("Duplicate ID found: " + id);
+            throw new IllegalStateException("Дублирующийся ID: " + id);
         }
         usedIds.add(id);
         if (id >= currentCounter) {

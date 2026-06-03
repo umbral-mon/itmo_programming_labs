@@ -15,7 +15,6 @@ public class SpaceMarineAdapter extends TypeAdapter<SpaceMarine> {
     private final CoordinatesAdapter coordinatesAdapter;
     private final ChapterAdapter chapterAdapter;
 
-    // Внедряем зависимости через конструктор
     public SpaceMarineAdapter(IdGenerator idGenerator) {
         this.idGenerator = idGenerator;
         this.coordinatesAdapter = new CoordinatesAdapter();
@@ -146,8 +145,6 @@ public class SpaceMarineAdapter extends TypeAdapter<SpaceMarine> {
         }
         in.endObject();
 
-        // Регистрируем ID (если его нет, генератор его создаст при следующем вызове, но здесь мы явно передаем null или значение)
-        // В данном случае, если ID null из JSON, мы можем попросить генератор создать новый.
         Integer finalId = id;
         if (finalId == null) {
             finalId = idGenerator.generateId();
@@ -155,8 +152,6 @@ public class SpaceMarineAdapter extends TypeAdapter<SpaceMarine> {
             idGenerator.registerExistingId(finalId);
         }
 
-        // Конструктор SpaceMarine сам проверит валидность полей и выбросит IllegalArgumentException,
-        // который Gson обернет в JsonIOException
         return new SpaceMarine(
                 finalId,
                 name,
