@@ -65,6 +65,26 @@ public class MarineEditDialog extends JDialog {
 
         int row = 0;
 
+        JLabel requiredLabel = new JLabel("Все поля - обязательные");
+        requiredLabel.setForeground(Color.RED);
+        requiredLabel.setFont(requiredLabel.getFont().deriveFont(Font.BOLD));
+        requiredLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.gridwidth = 2; // Объединяем две колонки (для лейбла и поля)
+        gbc.weightx = 1;
+        gbc.anchor = GridBagConstraints.CENTER;
+
+        mainPanel.add(requiredLabel, gbc);
+        row++;
+
+        // Возвращаем настройки для стандартных полей
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.anchor = GridBagConstraints.CENTER; // или WEST, по умолчанию
+
+
         // Name
         gbc.gridx = 0; gbc.gridy = row; gbc.weightx = 0;
         JLabel nameLabel = new JLabel();

@@ -13,13 +13,6 @@ import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.List;
 
-/**
- * Панель визуализации объектов коллекции.
- * Объекты рисуются с помощью Graphics2D с использованием данных о координатах и размерах.
- * Объекты от разных пользователей рисуются разными цветами.
- * При нажатии на объект выводится информация о нём.
- * При отрисовке нового объекта воспроизводится анимация масштабирования.
- */
 public class VisualizationPanel extends JPanel {
 
     private List<SpaceMarine> marines = Collections.emptyList();
@@ -53,7 +46,6 @@ public class VisualizationPanel extends JPanel {
     public VisualizationPanel() {
         setBackground(new Color(30, 30, 45));
 
-        // Анимационный таймер - обновляет прогресс анимации для новых объектов
         animationTimer = new Timer(30, e -> {
             boolean needsRepaint = false;
             for (Map.Entry<Integer, Double> entry : animationProgress.entrySet()) {
@@ -68,7 +60,6 @@ public class VisualizationPanel extends JPanel {
         });
         animationTimer.start();
 
-        // Перемещение и масштабирование
         addMouseWheelListener(e -> {
             double delta = e.getPreciseWheelRotation() > 0 ? 0.9 : 1.1;
             scale *= delta;
@@ -108,6 +99,7 @@ public class VisualizationPanel extends JPanel {
                     int dy = e.getY() - dragStart.y;
                     offsetX += dx;
                     offsetY += dy;
+                    //System.out.println(offsetX + " " + offsetY);
                     dragStart = e.getPoint();
                     repaint();
                 }
@@ -115,22 +107,25 @@ public class VisualizationPanel extends JPanel {
         });
     }
 
-    /**
-     * Устанавливает данные коллекции и запускает анимацию для новых объектов.
-     */
+    public void go(double x, double y){
+        offsetX = - (x * 10 * scale);
+        offsetY = (y * 10 * scale);
+
+        repaint();
+    }
+
+
     public void setMarines(List<SpaceMarine> marines) {
         Set<Integer> newIds = new HashSet<>();
         if (marines != null) {
             for (SpaceMarine m : marines) {
                 newIds.add(m.getID());
                 if (!previousIds.contains(m.getID())) {
-                    // Новый объект - запускаем анимацию
                     animationProgress.put(m.getID(), 0.0);
                 }
             }
         }
 
-        // Удаляем анимации для исчезнувших объектов
         for (Integer oldId : previousIds) {
             if (!newIds.contains(oldId)) {
                 animationProgress.remove(oldId);
@@ -144,9 +139,6 @@ public class VisualizationPanel extends JPanel {
         repaint();
     }
 
-    /**
-     * Получает цвет для владельца. Каждый владелец получает уникальный цвет.
-     */
     private Color getOwnerColor(String owner) {
         if (owner == null) return Color.GRAY;
         return ownerColors.computeIfAbsent(owner, o -> {
@@ -155,18 +147,12 @@ public class VisualizationPanel extends JPanel {
         });
     }
 
-    /**
-     * Преобразует координаты объекта в экранные координаты.
-     */
     private Point2D.Double worldToScreen(long worldX, long worldY) {
         double screenX = (worldX * 10 * scale) + getWidth() / 2.0 + offsetX;
         double screenY = (-worldY * 10 * scale) + getHeight() / 2.0 + offsetY;
         return new Point2D.Double(screenX, screenY);
     }
 
-    /**
-     * Находит объект в точке клика.
-     */
     private SpaceMarine findMarineAt(Point clickPoint) {
         for (SpaceMarine marine : marines) {
             if (marine.getCoordinates() == null) continue;
@@ -180,17 +166,11 @@ public class VisualizationPanel extends JPanel {
         return null;
     }
 
-    /**
-     * Вычисляет размер объекта на основе здоровья.
-     */
     private double getMarineSize(SpaceMarine marine) {
         double health = marine.getHealth() != null ? marine.getHealth() : 50;
         return Math.max(15, Math.min(50, health / 5 + 10));
     }
 
-    /**
-     * Показывает всплывающую информацию об объекте.
-     */
     private void showMarineInfo(SpaceMarine marine, Point location) {
         Locale locale = LocaleManager.getInstance().getCurrentLocale();
         NumberFormat numFmt = NumberFormat.getInstance(locale);
@@ -257,15 +237,12 @@ public class VisualizationPanel extends JPanel {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
-        // Рисуем координатную сетку
         drawGrid(g2d);
 
-        // Рисуем объекты
         for (SpaceMarine marine : marines) {
             drawMarine(g2d, marine);
         }
 
-        // Рисуем легенду владельцев
         drawLegend(g2d);
 
         g2d.dispose();
@@ -296,12 +273,6 @@ public class VisualizationPanel extends JPanel {
         }
     }
 
-    /**
-     * Рисует объект SpaceMarine как графический примитив (щит с мечом).
-     * Размер определяется здоровьем, позиция — координатами.
-     * Цвет определяется владельцем.
-     * При появлении объекта воспроизводится анимация масштабирования.
-     */
     private void drawMarine(Graphics2D g2d, SpaceMarine marine) {
         if (marine.getCoordinates() == null) return;
 
@@ -383,18 +354,12 @@ public class VisualizationPanel extends JPanel {
         g2d.drawString(idStr, (int) (center.x - idWidth / 2.0), (int) (center.y - s * 1.6 - 5));
     }
 
-    /**
-     * Функция плавности для анимации с эффектом "отскока".
-     */
     private double easeOutBack(double t) {
         double c1 = 1.70158;
         double c3 = c1 + 1;
         return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
     }
 
-    /**
-     * Рисует легенду владельцев в правом верхнем углу.
-     */
     private void drawLegend(Graphics2D g2d) {
         if (ownerColors.isEmpty()) return;
 
@@ -427,9 +392,6 @@ public class VisualizationPanel extends JPanel {
         void onEdit(SpaceMarine marine);
     }
 
-    /**
-     * Сбрасывает вид к начальным настройкам.
-     */
     public void resetView() {
         offsetX = 0;
         offsetY = 0;

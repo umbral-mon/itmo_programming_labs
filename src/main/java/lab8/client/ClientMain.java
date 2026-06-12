@@ -38,16 +38,24 @@ public class ClientMain implements Runnable {
             }
 
             // Показываем диалог авторизации
-            LoginDialog loginDialog = new LoginDialog(null, networkManager);
-            loginDialog.setVisible(true);
+            MainFrame mainFrame = null;
+            //while (true) {
+                LoginDialog loginDialog = null;
+                    loginDialog = new LoginDialog(null, networkManager);
+                    loginDialog.setVisible(true);
 
-            if (!loginDialog.isSucceeded()) {
-                System.exit(0);
-            }
 
-            // Открываем главное окно
-            MainFrame mainFrame = new MainFrame(networkManager);
-            mainFrame.setVisible(true);
+                if (loginDialog != null &&  !loginDialog.isSucceeded()) {
+                    System.exit(0);
+                }
+
+                // Открываем главное окно
+                    mainFrame = new MainFrame(networkManager);
+                    mainFrame.setVisible(true);
+
+
+
+            //}
         });
     }
 }

@@ -7,6 +7,7 @@ import javax.swing.Timer;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -14,15 +15,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
 
-/**
- * Главное окно приложения. Содержит:
- * - Отображение текущего пользователя и выбор языка
- * - Таблицу коллекции с фильтрацией и сортировкой
- * - Область визуализации объектов
- * - Панель ввода команд
- * - Поддержку всех команд из предыдущих лабораторных работ
- * - Автоматическое обновление при изменении коллекции
- */
 public class MainFrame extends JFrame {
 
     private final NetworkManager networkManager;
@@ -60,13 +52,13 @@ public class MainFrame extends JFrame {
         // Первоначальная загрузка
         refreshCollection();
 
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                exitApp();
-            }
-        });
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//        addWindowListener(new WindowAdapter() {
+//            @Override
+//            public void windowClosing(WindowEvent e) {
+//                exitApp();
+//            }
+//        });
     }
 
     private void initComponents() {
@@ -74,18 +66,18 @@ public class MainFrame extends JFrame {
         setMinimumSize(new Dimension(900, 600));
         setLocationRelativeTo(null);
 
-        // ===== Верхняя панель (пользователь, язык, кнопки) =====
+        // верхняя панель (пользователь, язык, кнопки)
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-        // Левая часть: информация о пользователе
+        // левая часть - информация о пользователе
         JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         userLabel = new JLabel();
         userLabel.setFont(userLabel.getFont().deriveFont(Font.BOLD));
         userPanel.add(userLabel);
         topPanel.add(userPanel, BorderLayout.WEST);
 
-        // Центральная часть: выбор языка
+        // центральная часть - язык
         JPanel langPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         langPanel.add(new JLabel() {{
             putClientProperty("i18nKey", "main.language");
@@ -105,7 +97,7 @@ public class MainFrame extends JFrame {
         langPanel.add(languageCombo);
         topPanel.add(langPanel, BorderLayout.CENTER);
 
-        // Правая часть: кнопки
+        // Правая часть кнопки
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton refreshBtn = new JButton();
         refreshBtn.putClientProperty("i18nKey", "main.refresh");
@@ -120,7 +112,7 @@ public class MainFrame extends JFrame {
 
         add(topPanel, BorderLayout.NORTH);
 
-        // ===== Центральная часть (таблица + визуализация) =====
+        // Центральная часть (таблица + визуализация)
         JSplitPane centerSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
         // Таблица
@@ -143,12 +135,13 @@ public class MainFrame extends JFrame {
         visualizationPanel = new VisualizationPanel();
         visualizationPanel.setMarineActionListener(marine -> openEditDialog(marine));
         centerSplit.setBottomComponent(visualizationPanel);
+        tablePanel.setTable(visualizationPanel);
 
         centerSplit.setResizeWeight(0.5);
         centerSplit.setDividerLocation(400);
         add(centerSplit, BorderLayout.CENTER);
 
-        // ===== Нижняя часть (ввод команд) =====
+        // Нижняя часть (ввод команд)
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBorder(BorderFactory.createTitledBorder(""));
         bottomPanel.putClientProperty("i18nTitleKey", "cmd.title");
@@ -173,7 +166,7 @@ public class MainFrame extends JFrame {
 
         add(bottomPanel, BorderLayout.SOUTH);
 
-        // ===== Меню =====
+        // Меню
         createMenuBar();
     }
 
@@ -266,13 +259,13 @@ public class MainFrame extends JFrame {
         setTitle(localeManager.getString("app.title"));
         userLabel.setText(localeManager.getString("main.user") + ": " + networkManager.getLogin());
 
-        // Обновляем все элементы с i18n ключами
+        // Обновление всех элементов с i18n ключами
         updateI18nComponents(getContentPane());
         if (menuBar != null) {
             updateMenuBarI18n();
         }
 
-        // Обновляем заголовок нижней панели
+        // Обновление заголовка нижней панели
         for (Component c : getContentPane().getComponents()) {
             if (c instanceof JPanel) {
                 JPanel jp = (JPanel) c;
@@ -332,9 +325,6 @@ public class MainFrame extends JFrame {
         }
     }
 
-    /**
-     * Обновляет коллекцию, запрашивая данные с сервера.
-     */
     private void refreshCollection() {
         commandExecutor.submit(() -> {
             try {
@@ -349,9 +339,6 @@ public class MainFrame extends JFrame {
         });
     }
 
-    /**
-     * Выполняет команду из поля ввода.
-     */
     private void executeCommand() {
         String command = commandInputField.getText().trim();
         if (command.isEmpty()) return;
@@ -396,9 +383,6 @@ public class MainFrame extends JFrame {
         });
     }
 
-    /**
-     * Выполняет команду напрямую (без поля ввода).
-     */
     private void executeCommandDirect(String command) {
         commandExecutor.submit(() -> {
             try {
@@ -415,16 +399,10 @@ public class MainFrame extends JFrame {
         });
     }
 
-    /**
-     * Открывает диалог добавления нового объекта.
-     */
     private void openAddDialog() {
         openAddDialog("add");
     }
 
-    /**
-     * Открывает диалог добавления с указанной командой.
-     */
     private void openAddDialog(String command) {
         MarineEditDialog dialog = new MarineEditDialog(this, null, true);
         dialog.setVisible(true);
@@ -449,9 +427,6 @@ public class MainFrame extends JFrame {
         }
     }
 
-    /**
-     * Открывает диалог редактирования объекта.
-     */
     private void openEditDialog(SpaceMarine marine) {
         String currentUser = networkManager.getLogin();
         boolean canEdit = currentUser != null && currentUser.equals(marine.getOwner());
@@ -490,9 +465,6 @@ public class MainFrame extends JFrame {
         }
     }
 
-    /**
-     * Удаляет объект.
-     */
     private void deleteMarine(SpaceMarine marine) {
         String currentUser = networkManager.getLogin();
         if (currentUser == null || !currentUser.equals(marine.getOwner())) {
@@ -533,19 +505,27 @@ public class MainFrame extends JFrame {
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-            commandExecutor.submit(() -> {
-                try {
-                    String response = networkManager.sendCommand("execute_script " + filePath);
-                    SwingUtilities.invokeLater(() -> {
-                        appendOutput(">> execute_script " + filePath);
-                        appendOutput(response);
-                        refreshCollection();
-                    });
-                } catch (Exception e) {
-                    SwingUtilities.invokeLater(() ->
-                            appendOutput(localeManager.getString("error.server") + ": " + e.getMessage()));
-                }
-            });
+            Scanner sc;
+            try {
+                sc = new Scanner(new File(filePath));
+            } catch (Exception ex) { return; }
+            while (sc.hasNextLine()) {
+                String command = sc.nextLine();
+                //System.out.println("Команда: " + command);
+                commandExecutor.submit(() -> {
+                    try {
+                        String response = networkManager.sendCommand(command);
+                        SwingUtilities.invokeLater(() -> {
+                            appendOutput(">> execute_script " + filePath);
+                            appendOutput(response);
+                            refreshCollection();
+                        });
+                    } catch (Exception e) {
+                        SwingUtilities.invokeLater(() ->
+                                appendOutput(localeManager.getString("error.server") + ": " + e.getMessage()));
+                    }
+                });
+            }
         }
     }
 
@@ -643,10 +623,17 @@ public class MainFrame extends JFrame {
                 localeManager.getString("confirm.title"),
                 JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            refreshTimer.stop();
-            commandExecutor.shutdownNow();
-            networkManager.disconnect();
-            System.exit(0);
+            dispose();
+            LoginDialog loginDialog = null;
+            loginDialog = new LoginDialog(null, networkManager);
+            loginDialog.setVisible(true);
+            MainFrame mainFrame = null;
+            mainFrame = new MainFrame(networkManager);
+            mainFrame.setVisible(true);
+            //refreshTimer.stop();
+            //commandExecutor.shutdownNow();
+            //networkManager.disconnect();
+            //System.exit(0);
         }
     }
 

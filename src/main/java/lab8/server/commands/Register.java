@@ -13,8 +13,8 @@ public class Register implements Command {
         if (!DataBaseManager.getInstance().hasUser(args[0]))
             result = DataBaseManager.getInstance().createUser(args[0], args[1]);
         return  result ?
-                "Пользователь зарегистрирован" :
-                "Ошибка при регистрации";
+                "ok" :
+                "error";
     }
 
     @Override

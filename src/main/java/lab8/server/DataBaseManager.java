@@ -24,6 +24,7 @@ public class DataBaseManager {
         config.setJdbcUrl(url);
         config.setUsername(username);
         config.setPassword(password);
+        System.out.printf("Установлены логин %s%n пароль %s%n ссылка %s%n", username, password, url);
 
         config.setMaximumPoolSize(10);
         config.setConnectionTimeout(30000);
@@ -107,12 +108,14 @@ public class DataBaseManager {
     public int update(String sql, Object... params) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
-
             setParameters(ps, params);
+            //System.out.println(ps.toString());
+
             return ps.executeUpdate();
 
         } catch (SQLException e) {
             logger.error("Ошибка UPDATE/INSERT/DELETE: {}", e.getMessage());
+            //e.printStackTrace();
             return -1;
         }
     }

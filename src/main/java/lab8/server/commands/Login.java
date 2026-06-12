@@ -14,8 +14,8 @@ public class Login implements Command {
         if (userHash == null)
             return "Неверный логин или пароль";
         return BCrypt.checkpw(args[1], userHash) ?
-                "Добро пожаловать!" :
-                "Нет такого пользователя";
+                "ok" :
+                "no user";
     }
 
     @Override

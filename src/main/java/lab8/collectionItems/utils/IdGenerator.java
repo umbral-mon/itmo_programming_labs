@@ -31,7 +31,8 @@ public class IdGenerator {
     public void registerExistingId(Integer id) {
         if (id == null) return;
         if (usedIds.contains(id)) {
-            throw new IllegalStateException("Дублирующийся ID: " + id);
+            return;
+            //throw new IllegalStateException("Дублирующийся ID: " + id);
         }
         usedIds.add(id);
         if (id >= currentCounter) {

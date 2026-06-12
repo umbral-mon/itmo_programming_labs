@@ -1,14 +1,12 @@
 package lab8.client.gui;
 
+import lab8.client.BCrypt;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 
-/**
- * Диалог авторизации/регистрации. Позволяет пользователю войти в систему
- * или зарегистрировать новый аккаунт. Поддерживает переключение языков.
- */
 public class LoginDialog extends JDialog {
 
     private final NetworkManager networkManager;
@@ -67,7 +65,7 @@ public class LoginDialog extends JDialog {
         });
         mainPanel.add(languageCombo, gbc);
 
-        // Username
+        // логин
         gbc.gridwidth = 1;
         gbc.gridy = 1;
         usernameLabel = new JLabel();
@@ -77,7 +75,7 @@ public class LoginDialog extends JDialog {
         usernameField = new JTextField(20);
         mainPanel.add(usernameField, gbc);
 
-        // Password
+        // пароль
         gbc.gridx = 0;
         gbc.gridy = 2;
         passwordLabel = new JLabel();
@@ -87,7 +85,7 @@ public class LoginDialog extends JDialog {
         passwordField = new JPasswordField(20);
         mainPanel.add(passwordField, gbc);
 
-        // Buttons
+        // кнопки
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         loginButton = new JButton();
         loginButton.addActionListener(e -> doLogin());
@@ -101,7 +99,7 @@ public class LoginDialog extends JDialog {
         gbc.gridwidth = 2;
         mainPanel.add(buttonPanel, gbc);
 
-        // Enter key support
+        // энтер
         KeyAdapter enterListener = new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -145,8 +143,10 @@ public class LoginDialog extends JDialog {
             if (!networkManager.isConnected()) {
                 networkManager.connect();
             }
+            password = new String(passwordField.getPassword());
             String response = networkManager.sendCommandWithCredentials(
                     "login " + username + " " + password, username, password);
+            System.out.println(response.trim());
             if (isSuccessResponse(response)) {
                 networkManager.setCredentials(username, password);
                 succeeded = true;
@@ -181,12 +181,18 @@ public class LoginDialog extends JDialog {
             if (!networkManager.isConnected()) {
                 networkManager.connect();
             }
+            password = BCrypt.hashpw(password, BCrypt.gensalt());
             String response = networkManager.sendCommandWithCredentials(
                     "register " + username + " " + password, username, password);
             if (isSuccessResponse(response)) {
                 networkManager.setCredentials(username, password);
                 succeeded = true;
-                dispose();
+                doLogin();
+                //dispose();
+                JOptionPane.showMessageDialog(this,
+                        localeManager.getString("login.okreg"),
+                        localeManager.getString("login.title"),
+                        JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(this,
                         localeManager.getString("login.error.register") + "\n" + (response != null ? response : ""),
@@ -205,14 +211,9 @@ public class LoginDialog extends JDialog {
         return succeeded;
     }
 
-    /**
-     * Проверяет, содержит ли ответ сервера признак успешной операции.
-     * Поддерживает ответы на разных языках.
-     */
     private boolean isSuccessResponse(String response) {
         if (response == null || response.trim().isEmpty()) return false;
-        String lower = response.toLowerCase();
-        return lower.contains("успешно") || lower.contains("success") || lower.contains("başarılı")
-                || lower.contains("riuscito") || lower.contains("exitoso") || lower.contains("успешн");
+        String lower = response.toLowerCase().trim();
+        return lower.equals("ok");
     }
 }

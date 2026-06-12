@@ -162,10 +162,6 @@ public class NetworkManager {
         return !response.isEmpty();
     }
 
-    /**
-     * Запрашивает коллекцию с сервера и возвращает список SpaceMarine.
-     * Если ответ не является JSON-массивом, возвращает пустой список.
-     */
     public List<SpaceMarine> requestCollection() {
         try {
             String response = sendCommand("show");
@@ -173,14 +169,24 @@ public class NetworkManager {
                 return Collections.emptyList();
             }
             String trimmed = response.trim();
-            // Проверяем, что ответ начинается с '[' (JSON-массив)
-            if (!trimmed.startsWith("[")) {
-                return Collections.emptyList();
+            System.out.println("Получено: " + trimmed);
+            String[] marines = trimmed.split("\n");
+            LinkedList<SpaceMarine> ret = new LinkedList<>();
+            for (String marine : marines) {
+                ret.add(gson.fromJson(marine, SpaceMarine.class));
             }
-            Type listType = new TypeToken<ArrayList<SpaceMarine>>() {}.getType();
-            List<SpaceMarine> marines = gson.fromJson(trimmed, listType);
-            return marines != null ? marines : Collections.emptyList();
+            //System.out.println(ret.size());
+            return ret;
+            // Проверяем, что ответ начинается с '[' (JSON-массив)
+            //if (!trimmed.startsWith("[")) {
+            //    return Collections.emptyList();
+            //}
+            //Type listType = new TypeToken<ArrayList<SpaceMarine>>() {}.getType();
+            //List<SpaceMarine> marines = gson.fromJson(trimmed, listType);
+            //return marines != null ? marines : Collections.emptyList();
+
         } catch (Exception e) {
+            e.printStackTrace();
             return Collections.emptyList();
         }
     }

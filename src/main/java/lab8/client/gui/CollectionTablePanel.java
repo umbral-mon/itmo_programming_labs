@@ -8,17 +8,13 @@ import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * Панель с таблицей коллекции SpaceMarine.
- * Поддерживает фильтрацию по каждой колонке и сортировку по клику на заголовок.
- * Фильтрация и сортировка реализованы с использованием Streams API.
- */
 public class CollectionTablePanel extends JPanel {
 
     private final CollectionTableModel tableModel;
     private JTable table;
     private JPanel filterPanel;
     private JTextField[] filterFields;
+    private VisualizationPanel panel;
 
     private MarineActionListener actionListener;
 
@@ -91,11 +87,16 @@ public class CollectionTablePanel extends JPanel {
         JPopupMenu popupMenu = new JPopupMenu();
         JMenuItem editItem = new JMenuItem();
         JMenuItem deleteItem = new JMenuItem();
+        JMenuItem gotoItem = new JMenuItem();
         editItem.addActionListener(e -> editSelectedMarine());
         deleteItem.addActionListener(e -> deleteSelectedMarine());
+        gotoItem.addActionListener(e -> gotoSelectedMarine());
         popupMenu.add(editItem);
         popupMenu.add(deleteItem);
+        popupMenu.add(gotoItem);
         table.setComponentPopupMenu(popupMenu);
+
+        gotoItem.setText("Перейти");
 
         table.addMouseListener(new MouseAdapter() {
             @Override
@@ -170,6 +171,18 @@ public class CollectionTablePanel extends JPanel {
         if (actionListener != null) {
             actionListener.onDelete(marine);
         }
+    }
+
+    private void gotoSelectedMarine(){
+        int row = table.getSelectedRow();
+        SpaceMarine marine = tableModel.getMarineAt(row);
+        if (marine == null) return;
+
+        panel.go(marine.getCoordinates().getX(), marine.getCoordinates().getY());
+    }
+
+    public void setTable(VisualizationPanel panel){
+        this.panel = panel;
     }
 
     public void setMarineActionListener(MarineActionListener listener) {
